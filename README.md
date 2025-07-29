@@ -1,18 +1,17 @@
 # QualifAI – AI‑assisted BANT Qualification Bot for n8n
 
 QualifAI is a drop‑in **n8n** workflow that turns a Telegram bot into an AI‑powered sales assistant.
-It guides prospects through a short chat or voice exchange, collects the **BANT** (Budget – Authority – Need – Timeline) signals, and writes clean, validated records to Google Sheets and Airtable – all without manual intervention.
+It guides prospects through a short chat or voice exchange, collects the **BANT** (Budget – Authority – Need – Timeline) signals, and writes clean, validated records to Google Sheets - all without manual intervention.
 
 ---
 
 ## ✨ Features
 
 * **Telegram intake (text or voice)** – Users can type or send voice notes; Whisper transcribes audio.
-* **Multi‑turn AI conversation** with Anthropic Claude 3.5 Haiku and a sliding WindowMemory for context.
-* **BANT‑aware question generation & validation** – The bot asks the minimum number of follow‑up questions and decides when a lead is *Qualified*.
+* **Multi‑turn AI conversation** with ChatGPT-o4-mini and a sliding WindowMemory for context.
+* **BANT‑aware question generation & validation** – The bot asks the minimum number of follow‑up questions and decides when all questions are answered.
 * **Human‑readable summaries** stored in Google Sheets (`Sum` tab) and validation flags in a separate sheet (`Val` tab).
-* **CRM sync** – Creates/updates Airtable records and flips a *Status* field to `Validated` for ready leads.
-* **No coding required** – Import the JSON, add credentials, hit *Activate*.
+* **CRM sync** – Creates/updates GoogleSheets records and flips a *Status* field to `Validated` for ready leads.
 
 ---
 
@@ -20,15 +19,32 @@ It guides prospects through a short chat or voice exchange, collects the **BANT*
 
 ```mermaid
 graph TD
-    A(Telegram Trigger) --> B{Switch<br/>text vs voice}
-    B -->|Text| C[ChatAI → Claude<br/>generate BANT Qs]
-    B -->|Voice| D[Download voice → Whisper → ChatAI]
-    C --> E[Code node<br/>extract WhatsApp part]
-    E --> F[Telegram Send Msg]
-    C --> G[SummAI → Sheets:Sum]
-    G --> H[ValidateAI]
-    H -->|YES| I[Airtable Update ✓<br/>Telegram Thank you]
-    H -->|NO| F
+    TG[Telegram Trigger] -->|message| FIND[find_user --> Sheets:User]
+    FIND --> IFNEW{Row found?}
+    IFNEW -- no --> CREATE[create_user --> Sheets:User]
+    CREATE --> TG_HELLO[Telegram hello]
+    IFNEW -- yes --> ISVAL{isValidated?}
+    ISVAL -- true --> HALT((Ignore))
+    ISVAL -- false --> SW[Switch text / voice]
+    SW -- Text --> SET
+    SW -- Voice --> DL[Download voice]
+    DL --> STT[Whisper STT]
+    SET --> CHAT[ChatAI]
+    STT --> CHAT
+    CHAT --> JS[Extract message]
+    JS --> TG_REPLY[Telegram reply]
+    JS --> SUMM[SummAI]
+    PREV_SUM[prevSum from Sheets] --> SUMM
+    SUMM --> SUM_UPD[Write to Summary Sheet]
+    SUM_UPD --> VALAI[ValidateAI]
+    VALAI --> VAL_UPD[Write to Validation Sheet]
+    VAL_UPD --> IFYES{Validation = YES?}
+    IFYES -- no --> TG_REPLY
+    IFYES -- yes --> MARK[Mark as Validated]
+    MARK --> TG_DONE[Telegram thank-you]
+    PREV_VAL[prevValidation] -.-> CHAT
+    PREV_SUM_BIS[prevSummary] -.-> CHAT
+    WB[(Window Buffer Memory)] -.-> CHAT
 ```
 
 *(Diagram simplified – see `QualifAI.json` for the exact flow.)*
@@ -40,10 +56,9 @@ graph TD
 | Service                        | Purpose                     | n8n credential            |
 | ------------------------------ | --------------------------- | ------------------------- |
 | Telegram Bot API               | Chat endpoint               | **telegramApi**           |
-| Anthropic API key              | Claude LLM                  | **anthropicApi**          |
+| OpenAI API key                 | Chatgpt LLM                 | **openaiApi**             |
 | OpenAI API key                 | Whisper STT                 | **openAiApi**             |
 | Google Cloud OAuth (Sheets)    | Reading & writing summaries | **googleSheetsOAuth2Api** |
-| Airtable Personal Access Token | CRM table sync              | **airtableTokenApi**      |
 
 > **n8n version:** 1.48 or newer (with `@n8n/n8n-nodes-langchain` ≥ 1.7).
 
@@ -109,12 +124,6 @@ Then reference them in the corresponding credentials.
    ├─ QualifAI.json      # n8n workflow export
    └─ README.md          # this file
 ```
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome! Please open an issue first to discuss major changes.
 
 ---
 
