@@ -1,18 +1,18 @@
 {
-  "name": "QualifAI",
+  "name": "QualifAi-GS",
   "nodes": [
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+        "sessionKey": "5591856292"
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        720,
-        320
+        1560,
+        280
       ],
-      "id": "0804b7d2-f6ce-41b2-9c9e-114222c36180",
+      "id": "535e710f-c8b0-47e4-8d1a-ee1438c2d5cd",
       "name": "Window Buffer Memory"
     },
     {
@@ -27,7 +27,7 @@
           "conditions": [
             {
               "id": "b5aebc58-fe03-41db-8435-4883ff17a016",
-              "leftValue": "={{ $json.output }}",
+              "leftValue": "={{ $json[\"Validate Info\"] }}",
               "rightValue": "YES",
               "operator": {
                 "type": "string",
@@ -42,10 +42,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2040,
-        560
+        2720,
+        600
       ],
-      "id": "a74f6029-c6d0-445c-9fe5-f524dfe9f8b9",
+      "id": "bb04015f-9808-40b7-b936-0065f41292d9",
       "name": "If"
     },
     {
@@ -59,10 +59,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        1440,
-        100
+        1540,
+        600
       ],
-      "id": "c5d3d0f7-d6f7-475c-9e9e-23303fc76cff",
+      "id": "215cf287-47fa-4255-bf7c-420f3d196668",
       "name": "SummAI",
       "retryOnFail": true
     },
@@ -86,7 +86,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Name": "={{ $('Airtable').item.json.Vorname }} {{ $('Switch').item.json.Nachname }}",
+            "Name": "={{ $('Switch').item.json.first_name }} {{ $('Switch').item.json.last_name }}",
             "Zusammenfassung": "={{ $json.output }}"
           },
           "matchingColumns": [
@@ -133,10 +133,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1840,
-        280
+        1920,
+        600
       ],
-      "id": "4dc22ddf-c3c7-428c-9c0b-c939a28350c5",
+      "id": "5406dbed-752b-4b69-b87a-f4a1c8081031",
       "name": "Zusammenfassung",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -147,57 +147,19 @@
     },
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.2,
-      "position": [
-        600,
-        320
-      ],
-      "id": "90a1d8d6-0274-4069-8fd4-8bd05eb16e23",
-      "name": "Anthropic Chat Model",
-      "credentials": {
-        "anthropicApi": {
-          "id": "wGqwxdmmAz7xc4HH",
-          "name": "Anthropic account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.2,
-      "position": [
-        1620,
-        760
-      ],
-      "id": "16b105ba-59d5-4a9b-ae82-534a30bd4229",
-      "name": "Anthropic Chat Model2",
-      "credentials": {
-        "anthropicApi": {
-          "id": "wGqwxdmmAz7xc4HH",
-          "name": "Anthropic account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "promptType": "define",
         "text": "={{ $json.text }}",
         "options": {
-          "systemMessage": "=You are an AI-assisted chat agent tasked with qualifying potential customers for life coaching services using the BANT (Budget, Authority, Need, Timeline) model. Your goal is to efficiently determine if a customer is qualified through a WhatsApp conversation.\n\nHere is the available customer information:\n\n<customer_info>\nVorname: {{ $('Airtable').item.json.Vorname }}    \nNachname: {{ $('Switch').item.json.Nachname }}    \nIndustrie: {{ $('Switch').item.json.Branche }}    \nUnternehmen: {{ $('Switch').item.json.Firma }}    \nWebsite: {{ $('Switch').item.json.Website }}    \nJahresumsatz (in €): {{ $('Switch').item.json.Jahresumsatz }}    \nE-Mail: {{ $('Switch').item.json['E-Mail'] }} \n\nThe customer's latest message is:\n\n<customer_message>\n{{ $json.text }}\n</customer_message>\n\nInstructions:\n\n\n\n1. Use the Google Sheets Tool \"prevValidation\" to check which BANT questions have already been answered and which are still missing.\n\n2. Use the Google Sheets Tool \"prevSummary\" to review the conversation history.\n(If its the first User message (empty Summary and Validation), start with a first message to recieve the BANT-Information)\n\n3. Based on the missing BANT information, formulate 1-2 targeted questions to ask the customer. Focus on one BANT category at a time.\n\n4. Craft a concise, friendly, and professional WhatsApp message containing your questions.\n\n5. If all BANT information has been collected, or if the customer expresses complaints or feedback, thank them and inform them that you'll pass their message to a human representative.\n\nImportant Rules:\n- Write the Telegram-Message in english language\n- you don't have to greet the customer in every message\n- Keep messages short and suitable for Telegram.\n- Do not explain your thought process or actions in the message.\n- Maintain a friendly and professional tone.\n- If you encounter complaints or feedback, thank the customer and inform them that you'll pass it to a human representative.\n\nConduct your BANT analysis inside <bant_analysis> tags before crafting the final WhatsApp message. Your output should only contain the WhatsApp message, enclosed in <whatsapp_message> tags.\n\nExample output structure:\n\n<bant_analysis>\n1. Review customer information:\n   - [Note any relevant details from customer_info]\n\n2. Analyze Budget:\n   - [Note what's known/unknown about budget]\n   - [Formulate question if needed]\n\n3. Analyze Authority:\n   - [Note what's known/unknown about authority]\n   - [Formulate question if needed]\n\n4. Analyze Need:\n   - [Note what's known/unknown about need]\n   - [Formulate question if needed]\n\n5. Analyze Timeline:\n   - [Note what's known/unknown about timeline]\n   - [Formulate question if needed]\n\n6. Formulate final questions:\n   - [List 1-2 most important questions based on analysis]\n</bant_analysis>\n\n<whatsapp_message>\n\n[Your 1-2 targeted questions here]\n\n\n</whatsapp_message>"
+          "systemMessage": "=You are an friendly and professional chat agent tasked with qualifying potential customers for buisness coaching services using the BANT (Budget, Authority, Need, Timeline) model. Your goal is to efficiently determine if a customer is qualified through a WhatsApp conversation.\n\nHere is the available customer information:\n\n<customer_info>\nVorname: {{ $('Switch').item.json.first_name }}   \nNachname: {{ $('Switch').item.json.last_name }}  \nIndustrie: {{ $('Switch').item.json.industry }}   \nUnternehmen: {{ $('Switch').item.json.company_name }}\nJahresumsatz (in €):\nWebsite: {{ $('Switch').item.json.website }}    \nE-Mail: {{ $('Switch').item.json.email_address }}\n\nThe customer's latest message is:\n\n<customer_message>\n{{ $json.text }}\n</customer_message>\n\nInstructions:\n\n1. Use the Google Sheets Tool \"prevValidation\" to check which BANT questions have already been answered and which are still missing.\n\n2. Use the Google Sheets Tool \"prevSummary\" to review the conversation history.\n(If its the first User message (empty Summary and Validation), start with a first message to recieve the BANT-Information)\n\n3. Based on the missing BANT information, formulate 1-2 targeted questions to ask the customer. Focus on one BANT category at a time.\n\n4. Craft a concise, friendly, and professional WhatsApp message containing your questions.\n\n5. If all BANT information has been collected, or if the customer expresses complaints or feedback, thank them and inform them that you'll pass their message to a human representative.\n\nImportant Rules:\n- Write the Telegram-Message in english language\n- you don't have to greet the customer in every message\n- Keep messages short and suitable for Telegram.\n- Do not explain your thought process or actions in the message.\n- Maintain a friendly and professional tone.\n- If you encounter complaints or feedback, thank the customer and inform them that you'll pass it to a human representative.\n\nConduct your BANT analysis inside <bant_analysis> tags before crafting the final WhatsApp message. Your output should only contain the WhatsApp message, enclosed in <whatsapp_message> tags.\n\nExample output structure:\n\n<bant_analysis>\n1. Review customer information:\n   - [Note any relevant details from customer_info]\n\n2. Analyze Budget:\n   - [Note what's known/unknown about budget]\n   - [Formulate question if needed]\n\n3. Analyze Authority:\n   - [Note what's known/unknown about authority]\n   - [Formulate question if needed]\n\n4. Analyze Need:\n   - [Note what's known/unknown about need]\n   - [Formulate question if needed]\n\n5. Analyze Timeline:\n   - [Note what's known/unknown about timeline]\n   - [Formulate question if needed]\n\n6. Formulate final questions:\n   - [List 1-2 most important questions based on analysis]\n</bant_analysis>\n\n<whatsapp_message>\n\n[Your 1-2 targeted questions here]\n\n</whatsapp_message>"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        700,
-        100
+        1540,
+        60
       ],
-      "id": "74046f7b-01df-41d5-af20-c221e216a3bc",
+      "id": "8bd8cfb7-7ece-4006-9783-dfe6147ab3f4",
       "name": "ChatAI",
       "alwaysOutputData": false,
       "retryOnFail": true
@@ -213,10 +175,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        1660,
-        560
+        2140,
+        600
       ],
-      "id": "38c398be-a164-4992-8324-60cbde15ea31",
+      "id": "24e4af64-c232-44b1-a8c2-7a126e9d48a1",
       "name": "ValidateAI",
       "retryOnFail": true
     },
@@ -240,7 +202,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Name": "={{ $('Airtable').item.json.Vorname }} {{ $('Switch').item.json.Nachname }}",
+            "Name": "={{ $('Switch').item.json.first_name }} {{ $('Switch').item.json.last_name }}",
             "Validate Info": "={{ $json.output }}"
           },
           "matchingColumns": [
@@ -287,10 +249,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        2040,
-        900
+        2500,
+        600
       ],
-      "id": "319a60d9-d6a1-4b59-9a66-6aa128d3070c",
+      "id": "b95175aa-922c-42ec-abbb-62c80137f0e7",
       "name": "ValidateInfo",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -319,7 +281,7 @@
           "values": [
             {
               "lookupColumn": "Name",
-              "lookupValue": "={{ $('Airtable').item.json.Vorname }} {{ $('Switch').item.json.Nachname }}"
+              "lookupValue": "={{ $('Switch').item.json.first_name }} {{ $('Switch').item.json.last_name }}"
             }
           ]
         },
@@ -328,10 +290,10 @@
       "type": "n8n-nodes-base.googleSheetsTool",
       "typeVersion": 4.5,
       "position": [
-        840,
-        320
+        1680,
+        280
       ],
-      "id": "efd50aee-09f6-4510-a419-ecac3e346015",
+      "id": "0dda9ba5-ecd9-4847-bb84-7f69e8fd5b3a",
       "name": "prevValidation",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -360,7 +322,7 @@
           "values": [
             {
               "lookupColumn": "Name",
-              "lookupValue": "={{ $('Airtable').item.json.Vorname }} {{ $('Switch').item.json.Nachname }}"
+              "lookupValue": "={{ $('Switch').item.json.first_name }} {{ $('Switch').item.json.last_name }}"
             }
           ]
         },
@@ -370,10 +332,10 @@
       "type": "n8n-nodes-base.googleSheetsTool",
       "typeVersion": 4.5,
       "position": [
-        1580,
-        300
+        1700,
+        820
       ],
-      "id": "05a5c990-7537-4f72-a479-0faf3030b0a4",
+      "id": "425d64d3-93dd-487f-9745-676c5465f2e1",
       "name": "prevSum",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -443,10 +405,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        -60,
-        120
+        700,
+        160
       ],
-      "id": "e77acfe4-c527-4574-8a96-62c51cd20696",
+      "id": "0c645cff-9d87-4772-899e-7ece954062e0",
       "name": "Switch"
     },
     {
@@ -458,10 +420,10 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.7,
       "position": [
-        380,
-        220
+        1140,
+        260
       ],
-      "id": "081c8a0d-6658-4104-b843-2b5a0b564d1f",
+      "id": "e42ccf2e-8528-4640-8eeb-a2672b68d98b",
       "name": "OpenAI",
       "credentials": {
         "openAiApi": {
@@ -487,31 +449,11 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        280,
-        0
+        920,
+        60
       ],
-      "id": "94006878-c1c7-4280-8d0c-8c166eece83f",
+      "id": "3a01f8fa-1500-470b-b330-e903dacf95ef",
       "name": "Edit Fields1"
-    },
-    {
-      "parameters": {
-        "model": "claude-3-5-haiku-20241022",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.2,
-      "position": [
-        1420,
-        300
-      ],
-      "id": "eff658a9-c964-4ece-ac9c-7f5ce8983f30",
-      "name": "Anthropic Chat Model1",
-      "credentials": {
-        "anthropicApi": {
-          "id": "wGqwxdmmAz7xc4HH",
-          "name": "Anthropic account"
-        }
-      }
     },
     {
       "parameters": {
@@ -525,12 +467,12 @@
           "conditions": [
             {
               "id": "29d6ab64-18fc-40b5-9be9-de3c90e187d2",
-              "leftValue": "={{ $json.Status }}",
-              "rightValue": "Validated",
+              "leftValue": "={{ $json.is_valid }}",
+              "rightValue": "=true",
               "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
               }
             }
           ],
@@ -541,10 +483,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -280,
-        120
+        480,
+        160
       ],
-      "id": "d0eefe0a-b2e8-4e17-b3ad-735e4b963bfa",
+      "id": "8c0d4de5-ce03-4db3-9aa4-5b404e24316c",
       "name": "isValidated"
     },
     {
@@ -576,10 +518,10 @@
       "type": "n8n-nodes-base.googleSheetsTool",
       "typeVersion": 4.5,
       "position": [
-        960,
-        320
+        1800,
+        280
       ],
-      "id": "8c1c1c4c-4098-4d7e-8b7d-accceded432b",
+      "id": "3e61042f-e3cc-48c5-be31-d86e08d1bb3d",
       "name": "prevSummery",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -595,10 +537,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1140,
-        100
+        2080,
+        280
       ],
-      "id": "dba1f6d8-edf4-4389-96df-b6287e26c889",
+      "id": "81d3807f-81d6-4f48-89bc-57e982223197",
       "name": "Code"
     },
     {
@@ -611,10 +553,10 @@
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
       "position": [
-        -1600,
-        100
+        -180,
+        260
       ],
-      "id": "0987bf2a-a3a8-4534-8893-78e7050ff2bc",
+      "id": "5ddffed0-4070-4e6d-b449-f35869bca9bf",
       "name": "Telegram Trigger",
       "webhookId": "8bd8b941-bb99-4b2f-8a1b-0b5ed2c8e8e2",
       "credentials": {
@@ -632,229 +574,16 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        160,
-        220
+        920,
+        260
       ],
-      "id": "aa7d4868-6d0a-481a-a1d2-abe49728149c",
+      "id": "b8df3253-143c-4d5f-b478-a84412997d8b",
       "name": "Telegram",
       "webhookId": "1f4aae7e-59c1-4169-962b-124d7ddd564b",
       "credentials": {
         "telegramApi": {
           "id": "lG4aK4bv3oge74l1",
           "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "search",
-        "base": {
-          "__rl": true,
-          "value": "appEeNZx6kc1nGIIT",
-          "mode": "list",
-          "cachedResultName": "PA",
-          "cachedResultUrl": "https://airtable.com/appEeNZx6kc1nGIIT"
-        },
-        "table": {
-          "__rl": true,
-          "value": "tblwsGOyqNhko2X3u",
-          "mode": "list",
-          "cachedResultName": "QualifAI",
-          "cachedResultUrl": "https://airtable.com/appEeNZx6kc1nGIIT/tblwsGOyqNhko2X3u"
-        },
-        "filterByFormula": "={Chat-Id}= {{ $json.message.from.id }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.airtable",
-      "typeVersion": 2.1,
-      "position": [
-        -940,
-        120
-      ],
-      "id": "f34b52e1-3437-41b7-b22f-534712da8224",
-      "name": "Airtable",
-      "credentials": {
-        "airtableTokenApi": {
-          "id": "MUVJrUZjgYRt8uxV",
-          "name": "Airtable Personal Access Token account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "upsert",
-        "base": {
-          "__rl": true,
-          "value": "appEeNZx6kc1nGIIT",
-          "mode": "list",
-          "cachedResultName": "PA",
-          "cachedResultUrl": "https://airtable.com/appEeNZx6kc1nGIIT"
-        },
-        "table": {
-          "__rl": true,
-          "value": "tblwsGOyqNhko2X3u",
-          "mode": "list",
-          "cachedResultName": "QualifAI",
-          "cachedResultUrl": "https://airtable.com/appEeNZx6kc1nGIIT/tblwsGOyqNhko2X3u"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Status": "Validated",
-            "Chat-Id": "={{ $('isValidated').item.json['Chat-Id'] }}"
-          },
-          "matchingColumns": [
-            "Chat-Id"
-          ],
-          "schema": [
-            {
-              "id": "id",
-              "displayName": "id",
-              "required": false,
-              "defaultMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "Nachname",
-              "displayName": "Nachname",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Vorname",
-              "displayName": "Vorname",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Firma",
-              "displayName": "Firma",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "E-Mail",
-              "displayName": "E-Mail",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Tel.",
-              "displayName": "Tel.",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Branche",
-              "displayName": "Branche",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Website",
-              "displayName": "Website",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Jahresumsatz",
-              "displayName": "Jahresumsatz",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "number",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Chat-Id",
-              "displayName": "Chat-Id",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Status",
-              "displayName": "Status",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "options",
-              "options": [
-                {
-                  "name": "Validated",
-                  "value": "Validated"
-                },
-                {
-                  "name": "Un-Validated",
-                  "value": "Un-Validated"
-                }
-              ],
-              "readOnly": false,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.airtable",
-      "typeVersion": 2.1,
-      "position": [
-        2260,
-        460
-      ],
-      "id": "61bddf8d-8be5-4f9c-a64b-63f9bf32d7bc",
-      "name": "Airtable1",
-      "credentials": {
-        "airtableTokenApi": {
-          "id": "MUVJrUZjgYRt8uxV",
-          "name": "Airtable Personal Access Token account"
         }
       }
     },
@@ -869,10 +598,10 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2260,
-        660
+        2940,
+        700
       ],
-      "id": "34c90d32-11a4-4973-83b7-71bb79943a5b",
+      "id": "b342519a-f3b6-4d70-8bf6-aff62ec5fbb8",
       "name": "Telegram1",
       "webhookId": "7dbb90a4-1d0b-4556-abf1-8dc9a846b484",
       "credentials": {
@@ -885,7 +614,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
-        "text": "=Thank you for answering my questions, {{ $('Airtable').item.json.Vorname }}.\n\nWe’ll get back to you shortly with some suggested times for a personal consultation.\n\nWishing you all the best and a great day!",
+        "text": "=Thank you for answering my questions, {{ $('Switch').item.json.first_name }}.\n\nWe’ll evaluated your request and get in touch with you soon.\n\nWishing you all the best and a great day!",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -893,16 +622,58 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2480,
-        460
+        3160,
+        500
       ],
-      "id": "d128d48b-437c-4058-b218-6f2084cb4185",
+      "id": "8763a267-0ef7-4af9-b9ac-e7580be8515c",
       "name": "Telegram2",
       "webhookId": "64bb7ac8-4247-485f-aee0-d0eeb1e701cc",
       "credentials": {
         "telegramApi": {
           "id": "lG4aK4bv3oge74l1",
           "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ",
+          "mode": "list",
+          "cachedResultName": "SalesAgentTest",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1274154586,
+          "mode": "list",
+          "cachedResultName": "User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ/edit#gid=1274154586"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        40,
+        260
+      ],
+      "id": "1c533e29-a244-4fd2-b594-19e9f1b6dc0b",
+      "name": "find_user",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "o6VgHADWIo2hRlUi",
+          "name": "Google Sheets account 3"
         }
       }
     },
@@ -917,13 +688,13 @@
           },
           "conditions": [
             {
-              "id": "bf78e38a-4e42-4393-ba39-9e7a014638ba",
-              "leftValue": "={{ $json.message.entities[0].type }}",
-              "rightValue": "bot_command",
+              "id": "74473bd8-02f8-440c-84f3-f5412d08e481",
+              "leftValue": "={{ $json.chat_id }}",
+              "rightValue": "",
               "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
               }
             }
           ],
@@ -934,231 +705,375 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1340,
-        100
+        260,
+        260
       ],
-      "id": "517cabb5-6468-407c-9a77-119f0b077c3a",
-      "name": "If1"
+      "id": "3cb1c6e4-9fd1-4423-a13b-2d1ef22fe2e7",
+      "name": "If2"
     },
     {
       "parameters": {
-        "operation": "upsert",
-        "base": {
+        "operation": "append",
+        "documentId": {
           "__rl": true,
-          "value": "appEeNZx6kc1nGIIT",
+          "value": "10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ",
           "mode": "list",
-          "cachedResultName": "PA",
-          "cachedResultUrl": "https://airtable.com/appEeNZx6kc1nGIIT"
+          "cachedResultName": "SalesAgentTest",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ/edit?usp=drivesdk"
         },
-        "table": {
+        "sheetName": {
           "__rl": true,
-          "value": "tblwsGOyqNhko2X3u",
+          "value": 1274154586,
           "mode": "list",
-          "cachedResultName": "QualifAI",
-          "cachedResultUrl": "https://airtable.com/appEeNZx6kc1nGIIT/tblwsGOyqNhko2X3u"
+          "cachedResultName": "User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ/edit#gid=1274154586"
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Telegram-Username": "={{ $('If1').item.json.message.from.username }}",
-            "Chat-Id": "={{ $json.message.from.id }}",
-            "Status": "Un-Validated"
+            "chat_id": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+            "first_name": "={{ $('Telegram Trigger').item.json.message.chat.first_name }}",
+            "last_name": "={{ $('Telegram Trigger').item.json.message.chat.last_name }}",
+            "is_valid": "=false",
+            "industry": "IT",
+            "company_name": "Agentify",
+            "website": "example.com",
+            "email_address": "demoo@example.de",
+            "Jahresumsatz (in €)": "100000"
           },
-          "matchingColumns": [
-            "Telegram-Username"
-          ],
+          "matchingColumns": [],
           "schema": [
             {
-              "id": "id",
-              "displayName": "id",
-              "required": false,
-              "defaultMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "Nachname",
-              "displayName": "Nachname",
+              "id": "chat_id",
+              "displayName": "chat_id",
               "required": false,
               "defaultMatch": false,
-              "canBeUsedToMatch": true,
               "display": true,
               "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Vorname",
-              "displayName": "Vorname",
-              "required": false,
-              "defaultMatch": false,
               "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Firma",
-              "displayName": "Firma",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "E-Mail",
-              "displayName": "E-Mail",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Tel.",
-              "displayName": "Tel.",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Branche",
-              "displayName": "Branche",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Website",
-              "displayName": "Website",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Jahresumsatz",
-              "displayName": "Jahresumsatz",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "number",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Telegram-Username",
-              "displayName": "Telegram-Username",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
               "removed": false
             },
             {
-              "id": "Chat-Id",
-              "displayName": "Chat-Id",
+              "id": "first_name",
+              "displayName": "first_name",
               "required": false,
               "defaultMatch": false,
-              "canBeUsedToMatch": true,
               "display": true,
               "type": "string",
-              "readOnly": false,
+              "canBeUsedToMatch": true,
               "removed": false
             },
             {
-              "id": "Status",
-              "displayName": "Status",
+              "id": "last_name",
+              "displayName": "last_name",
               "required": false,
               "defaultMatch": false,
-              "canBeUsedToMatch": true,
               "display": true,
-              "type": "options",
-              "options": [
-                {
-                  "name": "Validated",
-                  "value": "Validated"
-                },
-                {
-                  "name": "Un-Validated",
-                  "value": "Un-Validated"
-                }
-              ],
-              "readOnly": false,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "industry",
+              "displayName": "industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_name",
+              "displayName": "company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "website",
+              "displayName": "website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_address",
+              "displayName": "email_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Jahresumsatz (in €)",
+              "displayName": "Jahresumsatz (in €)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "is_valid",
+              "displayName": "is_valid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
               "removed": false
             }
           ],
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         },
-        "options": {
-          "typecast": true
-        }
+        "options": {}
       },
-      "type": "n8n-nodes-base.airtable",
-      "typeVersion": 2.1,
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
       "position": [
-        -940,
-        -100
+        480,
+        360
       ],
-      "id": "dd85d947-24fd-402a-bb5f-f89444fea55e",
-      "name": "Airtable2",
+      "id": "8cd8ba0d-3784-40d5-8829-9866df5118dd",
+      "name": "create_user",
       "credentials": {
-        "airtableTokenApi": {
-          "id": "MUVJrUZjgYRt8uxV",
-          "name": "Airtable Personal Access Token account"
+        "googleSheetsOAuth2Api": {
+          "id": "o6VgHADWIo2hRlUi",
+          "name": "Google Sheets account 3"
         }
       }
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "ba231b89-a7c2-47cd-859b-f89c16db8416",
-              "name": "message.from.id",
-              "value": "={{ $json.message.from.id }}",
-              "type": "string"
-            }
-          ]
+        "model": {
+          "__rl": true,
+          "value": "o4-mini",
+          "mode": "list",
+          "cachedResultName": "o4-mini"
         },
         "options": {}
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
       "position": [
-        -1140,
-        -100
+        1420,
+        280
       ],
-      "id": "64be707b-9265-4f1b-9645-388f7678eb7d",
-      "name": "Edit Fields"
+      "id": "170f8b64-85f4-4b60-8ee7-1427623c9cbc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "6V8D9KpngJsguB5N",
+          "name": "OpenAi account 3"
+        }
+      }
     },
     {
       "parameters": {
-        "chatId": "={{ $json.fields['Chat-Id'] }}",
-        "text": "=Hey there! 👋\nThanks for your interest and trust – great to have you here!\n\nI’m QualifAI, your personal assistant.\nIn the next few minutes, I’ll ask you a few short questions to better understand your needs and goals.\n\nYou can simply reply to each question with a message or a voice note, right here in the chat – whatever works best for you.\n👉 Please make sure to send only one message or voice note at a time, so I can respond properly.\n\nWhen you're ready to begin, just reply to this message in any way – and we’ll get started. 🙌",
+        "model": {
+          "__rl": true,
+          "value": "o4-mini",
+          "mode": "list",
+          "cachedResultName": "o4-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1580,
+        820
+      ],
+      "id": "7d7d75e0-b9ce-4ae0-b167-c02bea0772a3",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "6V8D9KpngJsguB5N",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o4-mini",
+          "mode": "list",
+          "cachedResultName": "o4-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2220,
+        820
+      ],
+      "id": "7b63cd83-db05-4f33-b2e5-c87ca471da21",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "6V8D9KpngJsguB5N",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ",
+          "mode": "list",
+          "cachedResultName": "SalesAgentTest",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1274154586,
+          "mode": "list",
+          "cachedResultName": "User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10eHFS5akLGvXWsQxNh9JrL9tuts3ghOw17lxwIliSIQ/edit#gid=1274154586"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('Switch').item.json.chat_id }}",
+            "is_valid": "=True"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_name",
+              "displayName": "first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_name",
+              "displayName": "last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "industry",
+              "displayName": "industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_name",
+              "displayName": "company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website",
+              "displayName": "website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_address",
+              "displayName": "email_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Jahresumsatz (in €)",
+              "displayName": "Jahresumsatz (in €)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_valid",
+              "displayName": "is_valid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2940,
+        500
+      ],
+      "id": "76a4e37f-d635-456a-8267-78c63a5027ce",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "o6VgHADWIo2hRlUi",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "=Hey there! 👋  \nThanks for your interest and trust – great to have you here!  \nI'm QualifAI, your personal assistant.  \nIn the next few minutes, I’ll ask you a few short questions to better understand your needs and goals.\n\n🗣️ You can simply reply to each question with a message or a voice note, right here in the chat – whatever works best for you.  \n⚠️ Please make sure to send only one message or voice note at a time, so I can respond properly.\n\nWhen you’re ready to begin, just reply to this message in any way – and we’ll get started. 🙌",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -1166,12 +1081,12 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        -720,
-        -100
+        700,
+        360
       ],
-      "id": "5edf25b7-473a-41fc-b90d-1ad81bd7b1c4",
+      "id": "b07d7f2c-87e4-44d9-afdf-be5609ef5716",
       "name": "Telegram3",
-      "webhookId": "c2aed5eb-1eb6-4007-8e4b-da3be4a665d2",
+      "webhookId": "7dbb90a4-1d0b-4556-abf1-8dc9a846b484",
       "credentials": {
         "telegramApi": {
           "id": "lG4aK4bv3oge74l1",
@@ -1180,7 +1095,35 @@
       }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 297876340,
+          "message": {
+            "message_id": 28,
+            "from": {
+              "id": 5591856290,
+              "is_bot": false,
+              "first_name": "Francisco",
+              "last_name": "Hella",
+              "username": "xxdeluluxx",
+              "language_code": "de"
+            },
+            "chat": {
+              "id": 5591856290,
+              "first_name": "Francisco",
+              "last_name": "Hella",
+              "username": "xxdeluluxx",
+              "type": "private"
+            },
+            "date": 1753802885,
+            "text": "hey"
+          }
+        }
+      }
+    ]
+  },
   "connections": {
     "Window Buffer Memory": {
       "ai_memory": [
@@ -1197,7 +1140,7 @@
       "main": [
         [
           {
-            "node": "Airtable1",
+            "node": "Google Sheets",
             "type": "main",
             "index": 0
           }
@@ -1233,28 +1176,6 @@
         ]
       ]
     },
-    "Anthropic Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "ChatAI",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Anthropic Chat Model2": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "ValidateAI",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "ChatAI": {
       "main": [
         [
@@ -1269,11 +1190,6 @@
     "ValidateAI": {
       "main": [
         [
-          {
-            "node": "If",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "ValidateInfo",
             "type": "main",
@@ -1344,17 +1260,6 @@
         ]
       ]
     },
-    "Anthropic Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "SummAI",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "isValidated": {
       "main": [
         [],
@@ -1404,14 +1309,25 @@
       "main": [
         [
           {
-            "node": "If1",
+            "node": "find_user",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Airtable": {
+    "find_user": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
       "main": [
         [
           {
@@ -1419,10 +1335,50 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "create_user",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
-    "Airtable1": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ChatAI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SummAI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ValidateAI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
       "main": [
         [
           {
@@ -1433,36 +1389,18 @@
         ]
       ]
     },
-    "If1": {
+    "ValidateInfo": {
       "main": [
         [
           {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Airtable",
+            "node": "If",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "Airtable2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Airtable2": {
+    "create_user": {
       "main": [
         [
           {
@@ -1474,15 +1412,15 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3cb59899-6d63-48f5-8d35-d14ad02a5bef",
+  "versionId": "f348ca63-c475-455d-8387-90c7ec9bbda6",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9fbb283e1dcd81791a2cf1a07ec26c07c67a44841711f8c28a34ac8107e54bcd"
   },
-  "id": "16lugkC5UkCtIYUO",
+  "id": "gXwi7eQDbRb4lfP8",
   "tags": []
 }
