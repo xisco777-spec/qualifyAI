@@ -120,4 +120,4 @@ Pull requests are welcome! Please open an issue first to discuss major changes.
 
 ## 📝 License
 
-MIT © 2025 Francisco
+MIT © 2025 xisco777-spec
